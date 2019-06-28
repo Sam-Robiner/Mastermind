@@ -73,7 +73,7 @@ class PegScore:
     KEY_PEG_COLORS = {'red', 'white'}
 
     def __init__(self, num_red: int = 0, num_white: int = 0):
-        if num_red + num_white > 4 or num_red + num_white < 0:
+        if num_red + num_white > 4 or num_red + num_white < 0 or num_red > 4 or num_red < 0 or num_white > 4 or num_white < 0:
             raise Exception('Invalid peg score')
         self._num_red = num_red
         self._num_white = num_white
@@ -194,6 +194,46 @@ def run_game_cpu_cpu():
     raise Exception('Timeout')
 
 
+def get_guess_input(suggested: Code):
+    """
+    Receive code guess from stdin with the given suggested guess
+    :param suggested: guess determined by minimax algorithm
+    :return: code instance representing player's guess
+    """
+    print(f'Suggested guess: {suggested.to_number()}')
+    guess = None
+    while guess == None:
+        guess_digits = input('Enter your guess as a 4-digit number, or press enter to use the suggested guess: ')
+        try:
+            if guess_digits == '':
+                guess = suggested
+            else:
+                guess = Code([int(i) for i in str(guess_digits)])
+        except:
+            print('Guess must be a number containing exactly 4 digits 1-6')
+
+    return guess
+
+
+def get_peg_score_input():
+    """
+    Receive peg score from stdin
+    :return: peg score instance representing resulting peg score
+    """
+    peg_score = None
+    while peg_score == None:
+        num_red = input('Enter the number of red pegs in the resulting peg score: ')
+        num_white = input('Enter the number of white pegs in the resulting peg score: ')
+        try:
+            num_red = int(num_red)
+            num_white = int(num_white)
+            peg_score = PegScore(num_red=num_red, num_white=num_white)
+        except:
+            print('Peg score must be two numbers adding to 0-4')
+
+    return peg_score
+
+
 def run_game_human_human():
     """
     Executes a single game with a human codemaker and a human codebreaker, using the minimax algorithm to make
@@ -208,27 +248,42 @@ def run_game_human_human():
 
     while peg_score != PegScore(num_red=4, num_white=0):
         # get player's guess
-        print(f'Suggested guess: {recommended_guess.to_number()}')
-        guess = None
-        while guess == None:
-            guess_digits = input('Enter your guess as a 4-digit number: ')
-            try:
-                guess = Code([int(i) for i in str(guess_digits)])
-            except:
-                print('Guess must be a number containing exactly 4 digits 1-6')
+        guess = get_guess_input(recommended_guess)
         unguessed.remove(guess)
 
         # get resulting peg score
-        peg_score = None
-        while peg_score == None:
-            num_red = input('Enter the number of red pegs in the resulting peg score: ')
-            num_white = input('Enter the number of white pegs in the resulting peg score: ')
-            try:
-                num_red = int(num_red)
-                num_white = int(num_white)
-                peg_score = PegScore(num_red=num_red, num_white=num_white)
-            except:
-                print('Peg score must be two numbers adding to 0-4')
+        peg_score = get_peg_score_input()
+
+        solution_candidates = set([s for s in solution_candidates if get_peg_score(recommended_guess, s) == peg_score])
+
+        recommended_guess = get_next_guess(solution_candidates, unguessed)[0]
+        guess_num += 1
+
+    print(f'VICTORY in {guess_num} moves')
+
+    return guess_num
+
+
+def run_game_cpu_human():
+    """
+    Executes a single game with a cpu codemaker and a human codebreaker, using the minimax algorithm to make
+    suggestions based on peg scores
+    :return: the number of guesses required to guess the solution code
+    """
+    soln = Code.generateRandom()
+    solution_candidates = Code.get_full_code_set()
+    unguessed = solution_candidates
+    recommended_guess = Code([1, 1, 2, 2])
+    peg_score = PegScore(num_red=0, num_white=0)
+    guess_num = 0  # incremented at least once
+
+    while peg_score != PegScore(num_red=4, num_white=0):
+        # get player's guess
+        guess = get_guess_input(recommended_guess)
+        unguessed.remove(guess)
+
+        # get resulting peg score
+        peg_score = get_peg_score(guess, soln)
 
         solution_candidates = set([s for s in solution_candidates if get_peg_score(recommended_guess, s) == peg_score])
 
@@ -255,4 +310,4 @@ def run_simulation():
 
 if __name__ == '__main__':
     # run_simulation()
-    run_game_human_human()
+    run_game_cpu_human()
