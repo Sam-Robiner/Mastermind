@@ -194,6 +194,52 @@ def run_game_cpu_cpu():
     raise Exception('Timeout')
 
 
+def run_game_human_human():
+    """
+    Executes a single game with a human codemaker and a human codebreaker, using the minimax algorithm to make
+    suggestions based on peg scores
+    :return: the number of guesses required to guess the solution code
+    """
+    solution_candidates = Code.get_full_code_set()
+    unguessed = solution_candidates
+    recommended_guess = Code([1, 1, 2, 2])
+    peg_score = PegScore(num_red=0, num_white=0)
+    guess_num = 0  # incremented at least once
+
+    while peg_score != PegScore(num_red=4, num_white=0):
+        # get player's guess
+        print(f'Suggested guess: {recommended_guess.to_number()}')
+        guess = None
+        while guess == None:
+            guess_digits = input('Enter your guess as a 4-digit number: ')
+            try:
+                guess = Code([int(i) for i in str(guess_digits)])
+            except:
+                print('Guess must be a number containing exactly 4 digits 1-6')
+        unguessed.remove(guess)
+
+        # get resulting peg score
+        peg_score = None
+        while peg_score == None:
+            num_red = input('Enter the number of red pegs in the resulting peg score: ')
+            num_white = input('Enter the number of white pegs in the resulting peg score: ')
+            try:
+                num_red = int(num_red)
+                num_white = int(num_white)
+                peg_score = PegScore(num_red=num_red, num_white=num_white)
+            except:
+                print('Peg score must be two numbers adding to 0-4')
+
+        solution_candidates = set([s for s in solution_candidates if get_peg_score(recommended_guess, s) == peg_score])
+
+        recommended_guess = get_next_guess(solution_candidates, unguessed)[0]
+        guess_num += 1
+
+    print(f'VICTORY in {guess_num} moves')
+
+    return guess_num
+
+
 def run_simulation():
     """
     Run 100 automated cpu vs. cpu games and print the counts of number of guesses required to guess the solution in each game
@@ -208,4 +254,5 @@ def run_simulation():
 
 
 if __name__ == '__main__':
-    run_simulation()
+    # run_simulation()
+    run_game_human_human()
