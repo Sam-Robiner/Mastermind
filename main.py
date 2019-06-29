@@ -284,6 +284,7 @@ def run_game_cpu_human():
 
         # get resulting peg score
         peg_score = get_peg_score(guess, soln)
+        print(f'Peg score: {peg_score}')
 
         solution_candidates = set([s for s in solution_candidates if get_peg_score(recommended_guess, s) == peg_score])
 
@@ -310,4 +311,4 @@ def run_simulation():
 
 if __name__ == '__main__':
     # run_simulation()
-    run_game_cpu_human()
+    run_game_human_human()
